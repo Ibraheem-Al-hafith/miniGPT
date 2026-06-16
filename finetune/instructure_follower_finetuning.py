@@ -7,6 +7,7 @@ from config import HF_MODELS, INSTRUCTION_DATA_DIR, MODEL_CONFIG, VARIANT
 from data.dataset import data_split, get_instruction_loaders
 from inference.load_weights import load_from_hf
 from model.gpt import GPTModel
+from 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -33,4 +34,17 @@ def loading_model(variant: str) -> tuple[torch.nn.Module, dict]:
 
 
 if __name__ == "__main__":
+    from train.trainer import train
+    from inference.generate      import generate, load_model
+
     train_loader, val_loader, test_loader = split_and_get_loaders(INSTRUCTION_DATA_DIR)
+    model = loading_model(VARIANT)
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device)
+    print(f"Training locally on: {device}")
+    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+
+    train(model, train_loader, val_loader, device)
+    print("trained successfully")
+
