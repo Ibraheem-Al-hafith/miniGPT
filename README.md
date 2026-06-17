@@ -476,6 +476,9 @@ To add your instruction dataset, place a JSON file named exactly **`instrution-d
 Execute, track, or download your training checkpoints via the remote configuration file `train/modal_train.py`:
 
 ```bash
+# Verify architecture modifications and trainable parameters locally
+uv run python finetune/instructure_follower_finetuning.py
+
 # Launch instruction fine-tuning on a remote Modal A100 GPU
 uv run python -m modal run train/modal_train.py::main
 

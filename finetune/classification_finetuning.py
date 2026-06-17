@@ -48,12 +48,11 @@ if __name__ == "__main__":
     model, config = setup_classification_model(variant=VARIANT)
     model.to(device)
     
-    # Test one batch
-    x, y = next(iter(train_loader))
-    x, y = x.to(device), y.to(device)
-    with torch.no_grad():
-        logits = model(x)[:, -1, :] # Last token output
-    print(f"Input shape: {x.shape}")
-    print(f"Logits shape: {logits.shape}")
-    print(f"Labels: {y}")
-    print("Local setup verified.")
+    # Train
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device)
+    print(f"Training locally on: {device}")
+    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+
+    train(model, train_loader, val_loader, device)
+    print("model trained")
