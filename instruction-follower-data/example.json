@@ -1,0 +1,22 @@
+[
+    {
+        "instruction": "Evaluate the following phrase by transforming it into the spelling given.",
+        "input": "freind --> friend",
+        "output": "The spelling of the given phrase \"freind\" is incorrect, the correct spelling is \"friend\"."
+    },
+    {
+        "instruction": "Edit the following sentence for grammar.",
+        "input": "He go to the park every day.",
+        "output": "He goes to the park every day."
+    },
+    {
+        "instruction": "Convert 45 kilometers to meters.",
+        "input": "",
+        "output": "45 kilometers is 45000 meters."
+    },
+    {
+        "instruction": "Rewrite this sentence to start with 'Although': Despite the rain, they went for a walk.",
+        "input": "",
+        "output": "Although it was raining, they went for a walk."
+    }
+]

@@ -10,6 +10,7 @@ build/
 # Data & checkpoints (large files — do not commit)
 data/raw/
 data/processed/
+data/classification-processed/
 checkpoints/
 *.pt
 *.pth

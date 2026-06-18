@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAIR miniGPT Fine-tune</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --accent2:   #3fb950;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --danger:    #f85149;
+      --radius:    10px;
+      --font:      'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    header img {
+      height: 44px;
+      width: 44px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    header .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    header .brand span {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    #model-badge {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--accent2);
+      background: rgba(63, 185, 80, 0.1);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    #btn-switch {
+      margin-left: 12px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #btn-switch:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* ── Main layout ──────────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 24px;
+      gap: 24px;
+    }
+
+    /* ── Panel shared ─────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Form controls ────────────────────────────────────────── */
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    label .label-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    label .label-row span {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 80px;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { outline: none; border-color: var(--accent); }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    /* ── Method selector ──────────────────────────────────────── */
+    .method-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .method-group input[type="radio"] { display: none; }
+
+    .method-group label {
+      flex: 1;
+      text-align: center;
+      padding: 7px 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--muted);
+      transition: all 0.15s;
+      flex-direction: row;
+      justify-content: center;
+    }
+
+    .method-group input[type="radio"]:checked + label {
+      background: rgba(88,166,255,0.12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Accordion ────────────────────────────────────────────── */
+    details summary {
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--muted);
+      user-select: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    details summary::before {
+      content: '▶';
+      font-size: 0.65rem;
+      transition: transform 0.2s;
+    }
+
+    details[open] summary::before { transform: rotate(90deg); }
+
+    details .inner { display: flex; flex-direction: column; gap: 14px; padding-top: 12px; }
+
+    /* ── Main button ─────────────────────────────────────────── */
+    #btn-action {
+      background: var(--accent);
+      color: #0d0f14;
+      border: none;
+      border-radius: var(--radius);
+      padding: 11px 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+
+    #btn-action:hover  { opacity: 0.85; }
+    #btn-action:active { opacity: 0.7;  }
+    #btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Output panel ─────────────────────────────────────────── */
+    .output-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #output {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      min-height: 300px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+
+    #output .placeholder { color: var(--muted); font-style: italic; }
+
+    #output .prompt-part  { color: var(--accent); }
+    #output .gen-part     { color: var(--text);   }
+    
+    .classify-result {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    .label-badge {
+      font-size: 3rem;
+      font-weight: 800;
+      padding: 10px 30px;
+      border-radius: 15px;
+      border: 2px solid var(--border);
+    }
+    
+    .label-spam { color: var(--danger); border-color: var(--danger); background: rgba(248,81,73,0.1); }
+    .label-ham { color: var(--accent2); border-color: var(--accent2); background: rgba(63,185,80,0.1); }
+
+    .output-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .output-actions button {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .output-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Spinner ──────────────────────────────────────────────── */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Examples ─────────────────────────────────────────────── */
+    .examples { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .example-chip {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      background: none;
+    }
+
+    .example-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────── -->
+<header>
+  <img src="/static/SAiR_logo.jpg" alt="SAIR logo" />
+  <div class="brand">
+    <h1>SAIR miniGPT <span id="mode-title" style="color:var(--accent)">Fine-tune</span></h1>
+    <span>Finetuned Models — Instruction & Classification</span>
+  </div>
+  <div id="model-badge">loading...</div>
+  <button id="btn-switch" onclick="toggleMode()">Switch to Classification</button>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Left: controls -->
+  <div class="panel">
+    <div class="panel-title">Controls</div>
+
+    <!-- Input Text -->
+    <label>
+      <span id="label-input">Input Text</span>
+      <textarea id="input-text" rows="3" placeholder="Type something..."></textarea>
+    </label>
+
+    <!-- Example chips -->
+    <div>
+      <div class="panel-title" style="margin-bottom:8px">Examples</div>
+      <div class="examples" id="example-list">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Generation specific controls -->
+    <div id="gen-controls">
+      <!-- Sampling method -->
+      <label>
+        Sampling Method
+        <div class="method-group">
+          <input type="radio" name="method" id="m-greedy"  value="greedy">
+          <label for="m-greedy">Greedy</label>
+          <input type="radio" name="method" id="m-topk"    value="top_k">
+          <label for="m-topk">Top-k</label>
+          <input type="radio" name="method" id="m-nucleus" value="nucleus" checked>
+          <label for="m-nucleus">Nucleus</label>
+        </div>
+      </label>
+
+      <!-- Max tokens -->
+      <label>
+        <div class="label-row">Max Tokens <span id="val-tokens">100</span></div>
+        <input type="range" id="max-tokens" min="10" max="300" step="10" value="100"
+               oninput="document.getElementById('val-tokens').textContent=this.value">
+      </label>
+
+      <!-- Advanced accordion -->
+      <details>
+        <summary>Advanced</summary>
+        <div class="inner">
+          <label>
+            <div class="label-row">Temperature <span id="val-temp">0.8</span></div>
+            <input type="range" id="temperature" min="0.1" max="2.0" step="0.1" value="0.8"
+                   oninput="document.getElementById('val-temp').textContent=parseFloat(this.value).toFixed(1)">
+          </label>
+          <label>
+            <div class="label-row">Top-k <span id="val-topk">50</span></div>
+            <input type="range" id="top-k" min="1" max="100" step="1" value="50"
+                   oninput="document.getElementById('val-topk').textContent=this.value">
+          </label>
+          <label>
+            <div class="label-row">Top-p <span id="val-topp">0.9</span></div>
+            <input type="range" id="top-p" min="0.1" max="1.0" step="0.05" value="0.9"
+                   oninput="document.getElementById('val-topp').textContent=parseFloat(this.value).toFixed(2)">
+          </label>
+          <label>
+            <div class="label-row">Beams <span id="val-beams">1</span></div>
+            <input type="range" id="beams" min="1" max="10" step="1" value="1"
+                   oninput="document.getElementById('val-beams').textContent=this.value">
+          </label>
+        </div>
+      </details>
+    </div>
+
+    <button id="btn-action" onclick="runAction()">Process</button>
+  </div>
+
+  <!-- Right: output -->
+  <div class="panel output-panel">
+    <div class="panel-title">Output</div>
+    <div id="output">
+      <span class="placeholder">Results will appear here...</span>
+    </div>
+    <div class="spinner" id="spinner"></div>
+    <div class="output-actions">
+      <button onclick="copyOutput()">Copy</button>
+      <button onclick="clearOutput()">Clear</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  SAIR — Sudanese AI Research &nbsp;·&nbsp; miniGPT Fine-tune Playground
+</footer>
+
+<script>
+  let currentMode = "instruction";
+
+  // ── Fetch model info on load ──────────────────────────────────────
+  updateInfo();
+
+  async function toggleMode() {
+    const nextMode = currentMode === "instruction" ? "classification" : "instruction";
+    const btnSwitch = document.getElementById("btn-switch");
+    const badge = document.getElementById("model-badge");
+    
+    btnSwitch.disabled = true;
+    btnSwitch.textContent = "Switching...";
+    badge.textContent = "reloading model...";
+    badge.style.color = "var(--accent2)";
+    badge.style.background = "rgba(63, 185, 80, 0.1)";
+
+    try {
+      const res = await fetch("/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: nextMode }),
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        alert("Switch failed: " + data.error);
+        badge.textContent = "error";
+      } else {
+        currentMode = data.mode;
+        setupUI();
+        updateInfo();
+      }
+    } catch (e) {
+      alert("Request failed: " + e.message);
+    } finally {
+      btnSwitch.disabled = false;
+    }
+  }
+
+  async function updateInfo() {
+    const badge = document.getElementById("model-badge");
+    try {
+      const res = await fetch("/info");
+      const d = await res.json();
+      currentMode = d.mode;
+      setupUI();
+      
+      if (d.checkpoint) {
+        badge.textContent = `${d.device.toUpperCase()} · ${d.checkpoint}`;
+        badge.style.color = "var(--accent2)";
+        badge.style.background = "rgba(63, 185, 80, 0.1)";
+        badge.style.borderColor = "rgba(63, 185, 80, 0.3)";
+      } else {
+        badge.textContent = `${d.device.toUpperCase()} · Base Model (No Checkpoint)`;
+        badge.style.color = "var(--danger)";
+        badge.style.background = "rgba(248, 81, 73, 0.1)";
+        badge.style.borderColor = "rgba(248, 81, 73, 0.3)";
+      }
+    } catch (e) {
+      badge.textContent = "error fetching info";
+    }
+  }
+
+  function setupUI() {
+    const modeTitle = document.getElementById("mode-title");
+    const labelInput = document.getElementById("label-input");
+    const btnAction = document.getElementById("btn-action");
+    const genControls = document.getElementById("gen-controls");
+    const exampleList = document.getElementById("example-list");
+    const inputText = document.getElementById("input-text");
+    const btnSwitch = document.getElementById("btn-switch");
+
+    if (currentMode === "classification") {
+      modeTitle.textContent = "Classification";
+      labelInput.textContent = "Text to Classify";
+      btnAction.textContent = "Classify";
+      genControls.style.display = "none";
+      inputText.placeholder = "Enter SMS or text message...";
+      btnSwitch.textContent = "Switch to Instruction";
+      
+      const examples = [
+        "Congratulations! You've won a $1000 Walmart gift card. Go to http://bit.ly/claim to redeem now.",
+        "Hey, are we still meeting for lunch today at 12:30?",
+        "URGENT: Your account has been compromised. Please login at http://secure-bank.com to verify.",
+        "Can you pick up some milk on your way home? Thanks!",
+        "WINNER! As a valued customer you have been selected to receive a free gift. Call 0800-123-456."
+      ];
+      renderExamples(examples);
+    } else {
+      modeTitle.textContent = "Instruction";
+      labelInput.textContent = "Instruction / Prompt";
+      btnAction.textContent = "Generate";
+      genControls.style.display = "block";
+      inputText.placeholder = "Write an instruction or start a story...";
+      btnSwitch.textContent = "Switch to Classification";
+
+      const examples = [
+        "What is the capital of Sudan?",
+        "Once upon a time in a galaxy far far away,",
+        "Explain how a transformer model works in simple terms.",
+        "Write a short poem about the Nile river.",
+        "Harry Potter walked into the great hall and saw"
+      ];
+      renderExamples(examples);
+    }
+  }
+
+  function renderExamples(examples) {
+    const exampleList = document.getElementById("example-list");
+    exampleList.innerHTML = "";
+    examples.forEach(ex => {
+      const btn = document.createElement("button");
+      btn.className = "example-chip";
+      btn.textContent = ex.length > 40 ? ex.substring(0, 37) + "..." : ex;
+      btn.onclick = () => { document.getElementById("input-text").value = ex; };
+      exampleList.appendChild(btn);
+    });
+  }
+
+  // ── Action (Generate or Classify) ──────────────────────────────────
+  async function runAction() {
+    const text = document.getElementById("input-text").value.trim();
+    if (!text) return;
+
+    const btn     = document.getElementById("btn-action");
+    const spinner = document.getElementById("spinner");
+    const output  = document.getElementById("output");
+
+    btn.disabled     = true;
+    spinner.style.display = "block";
+    output.innerHTML = "";
+
+    if (currentMode === "classification") {
+      await doClassify(text);
+    } else {
+      await doGenerate(text);
+    }
+    
+    btn.disabled = false;
+    spinner.style.display = "none";
+  }
+
+  async function doGenerate(prompt) {
+    const output = document.getElementById("output");
+    const method = document.querySelector('input[name="method"]:checked').value;
+
+    const body = {
+      prompt,
+      max_tokens  : parseInt(document.getElementById("max-tokens").value),
+      temperature : parseFloat(document.getElementById("temperature").value),
+      top_k       : parseInt(document.getElementById("top-k").value),
+      top_p       : parseFloat(document.getElementById("top-p").value),
+      beams       : parseInt(document.getElementById("beams").value),
+      method,
+    };
+
+    try {
+      const res  = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        output.innerHTML = `<span style="color:var(--danger)">${data.error}</span>`;
+      } else {
+        const promptEsc = data.text.substring(0, prompt.length)
+          .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        const genEsc = data.text.substring(prompt.length)
+          .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        output.innerHTML =
+          `<span class="prompt-part">${promptEsc}</span><span class="gen-part">${genEsc}</span>`;
+      }
+    } catch (e) {
+      output.innerHTML = `<span style="color:var(--danger)">Request failed: ${e.message}</span>`;
+    }
+  }
+
+  async function doClassify(text) {
+    const output = document.getElementById("output");
+    try {
+      const res = await fetch("/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        output.innerHTML = `<span style="color:var(--danger)">${data.error}</span>`;
+      } else {
+        const cls = data.label.toLowerCase() === "spam" ? "label-spam" : "label-ham";
+        const confidence = (data.confidence * 100).toFixed(1);
+        output.innerHTML = `
+          <div class="classify-result">
+            <div style="color:var(--muted); font-size: 0.9rem">Classification Result:</div>
+            <div class="label-badge ${cls}">${data.label.toUpperCase()}</div>
+            <div style="font-size: 1.1rem">Confidence: <strong>${confidence}%</strong></div>
+          </div>
+        `;
+      }
+    } catch (e) {
+      output.innerHTML = `<span style="color:var(--danger)">Request failed: ${e.message}</span>`;
+    }
+  }
+
+  // ── Keyboard shortcut: Ctrl+Enter ─────────────────────────────────
+  document.getElementById("input-text").addEventListener("keydown", e => {
+    if (e.ctrlKey && e.key === "Enter") runAction();
+  });
+
+  // ── Output actions ────────────────────────────────────────────────
+  function copyOutput() {
+    navigator.clipboard.writeText(document.getElementById("output").textContent);
+  }
+
+  function clearOutput() {
+    document.getElementById("output").innerHTML =
+      '<span class="placeholder">Results will appear here...</span>';
+  }
+</script>
+</body>
+</html>

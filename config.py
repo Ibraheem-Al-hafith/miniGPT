@@ -144,3 +144,15 @@ GEN_TEMPERATURE = 0.8
 GEN_TOP_K       = 50
 GEN_TOP_P       = 0.9
 GEN_BEAMS       = 3
+
+# ── Instruction follower ─────────────────────────────────────────────────────────
+
+# ======= DATA =======
+INSTRUCTION_DATA_DIR = ROOT / "instruction-follower-data"
+PAD_TOKEN_ID = 50256
+INGNORE_INDEX = -100
+ALLOWED_MAX_LENGTH = None
+VARIANT = "gpt2"  # or "gpt2-medium", "gpt2-large", "gpt2-xl" for pretrained weights or the path of your local checkpoint
+
+###--------------------------------classification finetuning config---------------------------------
+data_dir_classification = ROOT / "classification_data" / "SMSSpamCollection.csv" 

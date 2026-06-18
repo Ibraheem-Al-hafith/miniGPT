@@ -181,3 +181,23 @@ def load_model(config, ckpt_dir, device):
     model.load_state_dict(ckpt["model"])
     model.eval()
     return model
+
+def load_finetuned_model(variant, chkpt_dir, device):
+    import re
+    from finetune.instructure_follower_finetuning import (
+        loading_model
+    )
+    chkpt_dir = Path(chkpt_dir)
+    checkpoints = sorted(chkpt_dir.glob("epoch_*.pt"),
+                         key=lambda p: int(re.search(r"\d+", p.stem).group()))
+    if not checkpoints:
+        raise FileNotFoundError(f"No checkpoints in {chkpt_dir} — train first.")
+
+    latest = checkpoints[-1]
+    print(f"Loading {latest}")
+    ckpt = torch.load(latest, map_location=device, weights_only=False)
+
+    model, config = loading_model(variant)
+    model.load_state_dict(ckpt['model'])
+    model.eval()
+    return model

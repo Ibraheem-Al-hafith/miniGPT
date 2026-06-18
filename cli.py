@@ -96,6 +96,11 @@ def cmd_ui(args):
     run(hf_variant=args.hf)
 
 
+def cmd_ui_finetune(args):
+    from ui_finetune.server import run
+    run(task=args.task, hf_variant=args.hf)
+
+
 # ── Argument parser ───────────────────────────────────────────────────────────
 
 def main():
@@ -139,6 +144,13 @@ def main():
                       help="Load pretrained weights from HuggingFace instead of checkpoint. "
                            "Choices: gpt2 | gpt2-medium | gpt2-large | gpt2-xl")
 
+    # ui-finetune
+    p_ft = sub.add_parser("ui-finetune", help="Launch fine-tune UI (http://localhost:7861)")
+    p_ft.add_argument("--task", choices=["instruction", "classification"], default="instruction",
+                      help="Task to load (default: instruction)")
+    p_ft.add_argument("--hf", type=str, default=None,
+                      help="HuggingFace variant or local path")
+
     args = parser.parse_args()
     # normalise hyphen → underscore for dest
     if hasattr(args, "max_tokens") and args.max_tokens is None:
@@ -149,6 +161,7 @@ def main():
         "train"   : cmd_train,
         "generate": cmd_generate,
         "ui"      : cmd_ui,
+        "ui-finetune": cmd_ui_finetune,
     }
     dispatch[args.command](args)
 

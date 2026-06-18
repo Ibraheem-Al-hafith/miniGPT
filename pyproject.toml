@@ -15,6 +15,7 @@ dependencies = [
     "modal>=0.62.0",
     "matplotlib>=3.8.0",
     "wandb>=0.17.0",
+    "pandas>=3.0.3",
 ]
 
 [project.scripts]

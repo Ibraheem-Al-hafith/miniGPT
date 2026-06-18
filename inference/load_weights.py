@@ -42,7 +42,7 @@ def load_from_hf(variant: str = "gpt2", cache_dir: str = str(CKPT_DIR)):
     config = entry["config"]
 
     print(f"Downloading {variant} from HuggingFace...")
-    hf    = HF_GPT2.from_pretrained(entry["repo"], cache_dir=cache_dir)
+    hf    = HF_GPT2.from_pretrained(entry["repo"], cache_dir=cache_dir, token=False)
     hf.eval()
     d = hf.state_dict()
 
